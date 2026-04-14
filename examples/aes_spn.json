@@ -1,0 +1,11 @@
+{
+  "type": "spn",
+  "cell_bits": 8,
+  "n_cells": 16,
+  "columns": [
+    {"input_cells": [0, 5, 10, 15], "output_cells": [0, 1, 2, 3],  "branch_number": 5},
+    {"input_cells": [4, 9, 14, 3],  "output_cells": [4, 5, 6, 7],  "branch_number": 5},
+    {"input_cells": [8, 13, 2, 7],  "output_cells": [8, 9, 10, 11], "branch_number": 5},
+    {"input_cells": [12, 1, 6, 11], "output_cells": [12, 13, 14, 15], "branch_number": 5}
+  ]
+}

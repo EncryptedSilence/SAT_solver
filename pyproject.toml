@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sat-branch"
+version = "0.1.0"
+description = "SAT-based branch number computation for bit-level linear diffusion layers"
+requires-python = ">=3.9"
+dependencies = [
+    "python-sat>=0.1.8",
+]
+
+[project.optional-dependencies]
+cms = ["pycryptosat>=5.11"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+sat_branch = "sat_branch.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
