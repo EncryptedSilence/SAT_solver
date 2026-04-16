@@ -195,6 +195,64 @@ Typical outputs for the two Qalqan `c0` choices:
 The `{1,17,14}` variant is strictly weaker at the byte level — one fewer
 guaranteed active S-box per 2 rounds.
 
+## Qalqan `lin344` — rotation-constant study
+
+A full empirical study of the Qalqan `lin344` diffusion layer over 936
+candidate `c0` triples is written up in [RESULTS.md](RESULTS.md). Short
+version: switching from the original `c0 = {1, 17, 14}` to any of 8 top
+triples raises the guaranteed 4-round active S-box count from **12 to 16**
+(≈33% improvement), and a purely cell-level analysis would have missed
+this — several cell-level-BEST triples collapse to `R=3 = 9` under the
+bit-exact model.
+
+Three-stage ranking pipeline, all with incremental JSON caching:
+
+```bash
+# Stage 1 — cell-level SPN sweep (fast; ~290 s for 936 triples, R=2..4)
+python examples/sweep_c0.py
+
+# Stage 2 — bit-exact R=3 on stage-1 winners (~5-6 h for 242 triples)
+python examples/rank_best.py --rounds-bit 3
+
+# Stage 3 — bit-exact R=4 on stage-2 winners (~3-4 h for 26 triples)
+python examples/rank_r4.py
+```
+
+Outputs: [examples/c0_sweep_results.txt](examples/c0_sweep_results.txt),
+[examples/c0_rank_R3_results.txt](examples/c0_rank_R3_results.txt),
+[examples/c0_rank_R4_results.txt](examples/c0_rank_R4_results.txt). The
+shared cache [examples/c0_rank_cache.json](examples/c0_rank_cache.json)
+lets any stage skip already-solved triples.
+
+## DDT-aware minimum-weight differential trails
+
+The `trail` command bounds *active S-box counts* assuming any bijective
+S-box. To get the actual minimum-weight trail under a specific S-box
+(i.e. the true differential probability), the scripts below encode the
+S-box's DDT directly and minimise `W = Σ -log2(DDT[δi][δo]/256)` with a
+Sinz sequential-counter cardinality constraint. Current scripts hardcode
+the AES S-box; swap in another 8-bit bijection to retarget.
+
+```bash
+# R=3, c0 = {1,10,15} — single-shot solve, encoding rebuilt per W
+python examples/best_trail_c0_1_10_15.py
+
+# R=4 — single CNF, binary search on W via CMS assumptions (much faster)
+python examples/best_trail_c0_1_10_15_R4.py
+
+# Same pair for the original Qalqan c0 = {1,17,14}
+python examples/best_trail_c0_1_17_14.py
+python examples/best_trail_c0_1_17_14_R4.py
+```
+
+Each script prints the full per-round state trail (`x[r]`, `y[r]` in
+hex), the active-byte transition table `(round, byte, δi, δo, weight)`,
+and the total probability `2^-W`. The R=4 variants use an incremental
+encoding: the CNF (byte activity, S-box bijection, XOR-exact linear
+layer, `iv`/`ov` indicators, DDT-pair clauses) is built once and the
+threshold literal is driven by solver assumptions so CMS retains its
+learned clauses across the binary search over `W`.
+
 ## Tests
 
 ```bash
